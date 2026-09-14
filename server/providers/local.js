@@ -12,6 +12,9 @@ import { cctvProxy } from './cctv.js';
 import { defaultSourceRoot } from './common/source-root.js';
 import { radioBrowserProxy } from './radio.js';
 import { gbfsProxy } from './gbfs.js';
+import { transitProxy } from './transit.js';
+import { weatherForecastProxy, noaaHazardsProxy } from './community-weather.js';
+import { openWatersProxy } from './vessels/open-waters.js';
 import { adsbLolProxy } from './aircraft/adsb-lol.js';
 import { aisLiveProxy } from './vessels/ais-live.js';
 import { trackBackfillProxies } from './aircraft/tracks.js';
@@ -36,6 +39,10 @@ function localProviderPlugins() {
     cctvProxy({ sourceRoot: defaultSourceRoot }),
     radioBrowserProxy(),
     gbfsProxy(),
+    transitProxy(),
+    weatherForecastProxy(),
+    noaaHazardsProxy(),
+    openWatersProxy(),
     adsbLolProxy(),
     aisLiveProxy(),
     trackBackfillProxies(),

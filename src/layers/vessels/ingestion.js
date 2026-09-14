@@ -29,7 +29,19 @@ export function createIngestion({
             ])
           : requestController.signal;
       const snapshot = await vesselState._source.getSnapshot(
-        { maxRows: components.rendering.renderRowLimit() },
+        {
+          maxRows: components.rendering.renderRowLimit(),
+          latitude: Number.isFinite(
+            viewer.camera?.positionCartographic?.latitude,
+          )
+            ? (viewer.camera.positionCartographic.latitude * 180) / Math.PI
+            : undefined,
+          longitude: Number.isFinite(
+            viewer.camera?.positionCartographic?.longitude,
+          )
+            ? (viewer.camera.positionCartographic.longitude * 180) / Math.PI
+            : undefined,
+        },
         { signal },
       );
       if (!ownsAisRequest(requestController, requestSessionId)) return;
@@ -42,6 +54,7 @@ export function createIngestion({
         complete: snapshot.complete,
         rawRowCount: snapshot.rawRowCount,
         reason: snapshot.reason,
+        emptyIsValid: snapshot.emptyIsValid,
         status: snapshot.transportStatus,
         lastMessageAt: snapshot.lastMessageAt,
         nextAttemptAt: snapshot.nextAttemptAt,
@@ -58,6 +71,9 @@ export function createIngestion({
         ownsAisRequest(requestController, requestSessionId) &&
         error?.name !== 'AbortError'
       ) {
+        if (vesselState._source.label)
+          aisLiveVesselsLayer.source = vesselState._source.label;
+        components.store.expireVessels();
         components.lifecycle.markAisUnavailable(
           error?.message || 'AIS live load failed',
         );
@@ -98,6 +114,20 @@ export function createIngestion({
     state.lastMessageAt = snapshot.lastMessageAt;
     state.rawRowCount = snapshot.rawRowCount;
     state.acceptedRowCount = snapshot.acceptedRowCount;
+    components.store.expireVessels();
+
+    if (snapshot.acceptedRowCount === 0 && payload?.emptyIsValid) {
+      components.lifecycle.settleFirstConnectPhase('ready');
+      components.store.reconcileVessels(viewer, [], {
+        complete: payload?.complete !== false,
+      });
+      state.count = state.vesselRecords.length;
+      state.stale = state.count > 0;
+      state.lastUpdate = payload.observedAtMs ?? null;
+      state.newestPositionAt = null;
+      state.error = payload.reason || 'No fresh regional positions';
+      return { reconciled: true, ...snapshot };
+    }
 
     if (snapshot.acceptedRowCount === 0) {
       state.count = state.vesselRecords.length;
@@ -156,6 +186,11 @@ export function createIngestion({
       imo: record.imo,
       type: record.type,
       destination: record.destination,
+      callsign: record.callsign,
+      navStatus: record.navStatus,
+      provider: record.provider,
+      originSource: record.originSource,
+      expiresAtMs: record.expiresAtMs,
       speed: record.speedMps == null ? null : record.speedMps / 0.514444,
       course: record.courseDeg,
       heading: record.headingDeg,

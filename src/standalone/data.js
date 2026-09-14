@@ -8,6 +8,8 @@ import trafficLayer from '../data/traffic.js';
 import cctvLayer from '../data/cctv.js';
 import radioLayer from '../data/radio.js';
 import bikeshareLayer from '../data/bikeshare.js';
+import transitLayer from '../data/transit.js';
+import { createNoaaHazardsLayer } from '../layers/noaa/index.js';
 import aisLiveVesselsLayer from '../data/aisLiveVessels.js';
 import militaryInstallationsLayer from '../data/militaryInstallations.js';
 import militaryAwarenessLayer from '../data/militaryAwareness.js';
@@ -42,6 +44,9 @@ export function createStandaloneData({
   dataManager.register(cctvLayer);
   dataManager.register(radioLayer);
   dataManager.register(bikeshareLayer);
+  dataManager.register(transitLayer);
+  transitLayer.attachDataManager(dataManager);
+  dataManager.register(createNoaaHazardsLayer());
   dataManager.register(aisLiveVesselsLayer);
   dataManager.register(militaryInstallationsLayer);
   dataManager.register(militaryAwarenessLayer);

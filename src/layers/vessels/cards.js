@@ -90,6 +90,33 @@ export function createCards({
     ];
     const destination = String(record.destination || '').trim();
     if (destination) details.push(`→ ${trimHudValue(destination, 24)}`);
+    const identity = [
+      record.imo ? `IMO ${trimHudValue(record.imo, 16)}` : '',
+      record.callsign ? `CALL ${trimHudValue(record.callsign, 16)}` : '',
+    ].filter(Boolean);
+    if (identity.length) details.push(identity.join(' · '));
+    const navStates = [
+      'Under way using engine',
+      'At anchor',
+      'Not under command',
+      'Restricted manoeuvrability',
+      'Constrained by draught',
+      'Moored',
+      'Aground',
+      'Fishing',
+      'Under way sailing',
+    ];
+    const nav = navStates[record.navStatus];
+    if (record.navStatus !== null && record.navStatus !== undefined && nav)
+      details.push(nav);
+    if (record.provider)
+      details.push(
+        trimHudValue(
+          record.provider +
+            (record.originSource ? ` / ${record.originSource}` : ''),
+          48,
+        ),
+      );
     const stale = (record.missedRefreshes || 0) > 0;
     details.push(
       `MMSI ${record.mmsi || '--'} · ${formatPositionTime(record)}${stale ? ' · STALE' : ''}`,

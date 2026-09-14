@@ -11,6 +11,26 @@ export function createStore({
 }) {
   const { state } = vesselState;
 
+  /** Source-provided deadlines apply even when the next request fails or is empty. */
+  function expireVessels() {
+    const now = vesselState._aisRuntime.now();
+    for (const [mmsi, record] of state.vesselMap) {
+      if (!Number.isFinite(record.expiresAtMs) || record.expiresAtMs > now)
+        continue;
+      if (record === state.selectedRecord)
+        components.selection.clearVesselInspection({ evicted: true });
+      components.rendering.removeRecordPrimitives(record);
+      state.vesselMap.delete(mmsi);
+      if (state.trailMmsi === mmsi)
+        components.tracking.clearSelectedVesselTrail();
+    }
+    state.vesselRecords = [
+      ...state.vesselMap.values(),
+      ...state.unkeyedRecords,
+    ];
+    state.count = state.vesselRecords.length;
+  }
+
   /**
    * Reconcile the incoming AIS rows against the MMSI-keyed record map.
    * Existing records are updated in place (position/heading/label) so identity
@@ -23,6 +43,7 @@ export function createStore({
    */
 
   function reconcileVessels(viewer, rows, { complete = true } = {}) {
+    expireVessels();
     const receivedAtMs = vesselState._aisRuntime.now();
     components.rendering.ensureCollections(viewer);
 
@@ -127,6 +148,11 @@ export function createStore({
     record.imo = next.imo;
     record.type = next.type;
     record.destination = next.destination;
+    record.callsign = next.callsign;
+    record.navStatus = next.navStatus;
+    record.provider = next.provider;
+    record.originSource = next.originSource;
+    record.expiresAtMs = next.expiresAtMs;
     record.speed = next.speed;
     record.course = next.course;
     record.heading = next.heading;
@@ -183,6 +209,11 @@ export function createStore({
       imo: String(row.imo || ''),
       type: String(row.type || ''),
       destination: String(row.destination || ''),
+      callsign: String(row.callsign || ''),
+      navStatus: finiteNumber(row.navStatus),
+      provider: String(row.provider || ''),
+      originSource: String(row.originSource || ''),
+      expiresAtMs: finiteNumber(row.expiresAtMs),
       speed: finiteNumber(row.speed),
       course: finiteNumber(row.course),
       heading: finiteNumber(row.heading),
@@ -204,6 +235,7 @@ export function createStore({
     return Number.isFinite(number) ? number : null;
   }
   return {
+    expireVessels,
     reconcileVessels,
     updateRecordInPlace,
     normalizeVessel,

@@ -126,6 +126,66 @@ test('Windows hardening applies and then verifies the exact restricted DACL', ()
   assert.match(calls[2].args.at(-1), /seen\.Count -ne 3/);
 });
 
+for (const { root, architecture, systemDirectory, modulePath } of [
+  {
+    root: WINDOWS_ROOT,
+    architecture: 'x64',
+    systemDirectory: 'System32',
+    modulePath: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\Modules',
+  },
+  {
+    root: 'D:\\Windows',
+    architecture: 'x64',
+    systemDirectory: 'System32',
+    modulePath: 'D:\\Windows\\System32\\WindowsPowerShell\\v1.0\\Modules',
+  },
+  {
+    root: WINDOWS_ROOT,
+    architecture: 'ia32',
+    systemDirectory: 'Sysnative',
+    modulePath: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\Modules',
+  },
+]) {
+  test(`Windows verifier isolates PSModulePath on ${root} (${architecture})`, () => {
+    const filepath = 'C:\\GEV App\\ENVIRONMENT.tmp';
+    const environment = Object.freeze({
+      SYSTEMROOT: root,
+      PSModulePath: 'C:\\Program Files\\PowerShell\\7\\Modules',
+      psmodulepath: 'D:\\custom\\modules',
+      PSMODULEPATH: 'D:\\legacy\\modules',
+      PATH: 'D:\\custom\\bin',
+      GEV_TEST_MARKER: 'preserve unrelated environment',
+      GEV_ACL_FILE: 'parent-file',
+      GEV_ACL_USER_SID: 'parent-sid',
+    });
+    const before = { ...environment };
+    let verifierEnvironment;
+    const result = hardenCredentialFile(filepath, {
+      platform: 'win32',
+      architecture,
+      environment,
+      fileSystem: windowsFileSystem({ root, systemDirectory }),
+      spawn(command, args, options) {
+        if (command.endsWith('\\whoami.exe')) {
+          return { status: 0, signal: null, stdout: `"WORKSTATION\\alice","${USER_SID}"` };
+        }
+        if (command.endsWith('\\powershell.exe')) verifierEnvironment = options.env;
+        return { status: 0, signal: null };
+      },
+    });
+    assert.equal(result, true);
+    assert.deepEqual(verifierEnvironment, {
+      SYSTEMROOT: root,
+      PATH: 'D:\\custom\\bin',
+      GEV_TEST_MARKER: 'preserve unrelated environment',
+      PSModulePath: modulePath,
+      GEV_ACL_FILE: filepath,
+      GEV_ACL_USER_SID: USER_SID,
+    });
+    assert.deepEqual(environment, before);
+  });
+}
+
 test('Windows hardening bypasses PATH-shadowed native ACL tools', () => {
   const commands = [];
   const result = hardenCredentialFile('D:\\GEV\\ENVIRONMENT.tmp', {

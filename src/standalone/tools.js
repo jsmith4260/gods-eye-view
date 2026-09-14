@@ -10,6 +10,7 @@ import {
   releaseContinuousRender,
 } from '../renderGovernor.js';
 import { startStandaloneChrome } from './startupChrome.js';
+import { createCommunityTools } from '../ui/communityTools.js';
 
 /** Attach scene tools, rendering listeners and the standalone debug handle. */
 export function createStandaloneTools({
@@ -24,6 +25,13 @@ export function createStandaloneTools({
   const { viewer, tileset, mapStackController } = scene;
   const { styleManager, weatherEffects, cockpitCloudEffects } = controls;
   const { dataManager } = data;
+  const communityTools = createCommunityTools({
+    viewer,
+    styleManager,
+    dataManager,
+    mapStackController,
+  });
+  defer(() => communityTools.destroy());
   const sceneDirector = new SceneDirector(viewer, styleManager, dataManager);
   defer(() => sceneDirector.destroy());
   const annotations = initAnnotations({ viewer, tileset, placeSearch });

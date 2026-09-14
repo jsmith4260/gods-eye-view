@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createVesselLayer } from './index.js';
 import { createVesselState } from './state.js';
+import { createCommunityVesselSource } from '../../sources/live/open-waters.js';
 
 const noop = () => {};
 function services() {
@@ -34,9 +35,16 @@ function services() {
 }
 function setup(source, options = {}) {
   const layer = createVesselLayer({ source, services: services(), options });
+  const rendered = [];
   layer.testing._setVesselStateForTest({
     viewer: {},
-    billboardCollection: { add: (options) => ({ ...options }), remove: noop },
+    billboardCollection: {
+      add: (options) => {
+        rendered.push(options);
+        return { ...options };
+      },
+      remove: noop,
+    },
   });
   let now = 1000;
   layer.testing._setAisRuntimeForTest({
@@ -46,6 +54,7 @@ function setup(source, options = {}) {
   });
   return {
     layer,
+    rendered,
     advance: (ms) => {
       now += ms;
     },
@@ -72,6 +81,85 @@ const snapshot = (records, extra = {}) => ({
   transportStatus: 'live',
   rawRowCount: records.length,
   ...extra,
+});
+
+test('regional ships expire on failed refreshes instead of remaining on the globe indefinitely', async (t) => {
+  t.mock.method(console, 'warn', noop);
+  let fail = false;
+  const { layer, advance } = setup({
+    async getSnapshot() {
+      if (fail) throw new Error('fixture offline');
+      return snapshot([{ ...observation('232123456'), expiresAtMs: 2000 }]);
+    },
+  });
+  await layer.update();
+  assert.equal(layer.hasContact('232123456'), true);
+  advance(1001);
+  fail = true;
+  await layer.update();
+  assert.equal(Boolean(layer.hasContact('232123456')), false);
+  assert.equal(layer.getStats().count, 0);
+});
+
+test('a failed first AISStream snapshot updates vessel health attribution after automatic provider resolution', async (t) => {
+  t.mock.method(console, 'warn', noop);
+  const source = createCommunityVesselSource({
+    aisSource: {
+      label: 'AISStream',
+      async getSnapshot() {
+        throw new Error('AISStream key rejected');
+      },
+    },
+    fetchImpl: async () => Response.json({ provider: 'aisstream' }),
+  });
+  const { layer } = setup(source);
+  await layer.update();
+  assert.equal(layer.source, 'AISStream');
+  assert.equal(layer.getStats().error, 'AISStream key rejected');
+  assert.equal(layer.getStats().lastUpdate, null);
+  assert.equal(layer.getStats().count, 0);
+});
+
+test('a valid empty regional snapshot clears old contacts and says no fresh positions', async () => {
+  let current = snapshot([observation('232123456')]);
+  const { layer } = setup({
+    async getSnapshot() {
+      return current;
+    },
+  });
+  await layer.update();
+  current = snapshot([], {
+    transportStatus: 'empty',
+    emptyIsValid: true,
+    reason: 'No fresh regional positions',
+  });
+  await layer.update();
+  assert.equal(Boolean(layer.hasContact('232123456')), false);
+  assert.equal(layer.getStats().count, 0);
+  assert.equal(layer.getStats().error, 'No fresh regional positions');
+});
+
+test('vessel detail cards retain source, callsign, IMO and navigational state from the source', async () => {
+  const { layer, rendered } = setup({
+    async getSnapshot() {
+      return snapshot([
+        {
+          ...observation('232123456'),
+          callsign: 'ABCD',
+          imo: '1234567',
+          navStatus: 0,
+          provider: 'OpenWaters',
+        },
+      ]);
+    },
+  });
+  await layer.update();
+  const record = rendered[0].id;
+  const details = layer.buildSelectedVesselCard(record).details.join('\n');
+  assert.match(details, /ABCD/);
+  assert.match(details, /1234567/);
+  assert.match(details, /Under way/);
+  assert.match(details, /OpenWaters/);
 });
 
 test('vessel construction is inert and each instance owns its records, icon cache and clock', () => {

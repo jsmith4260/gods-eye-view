@@ -143,13 +143,22 @@ export function hardenCredentialFile(filepath, {
     // accept only three explicit FullControl allow principals, with inheritance
     // disabled. Any unexpected rule, right, command error, or missing principal
     // fails closed before the secret reaches disk.
+    // PowerShell 5.1 must not inherit PowerShell 7 module paths. Remove every
+    // casing before assigning the child-only path, since Windows env keys are
+    // case-insensitive. Sysnative is only the 32-bit caller's launch alias;
+    // the native PowerShell child resolves its modules through System32.
+    const verifierEnvironment = Object.fromEntries(
+      Object.entries(environment).filter(([name]) => name.toLowerCase() !== 'psmodulepath'),
+    );
+    const nativePowerShell = tools.powershell.replace('\\Sysnative\\', '\\System32\\');
     const verified = spawn(tools.powershell, [
       '-NoProfile',
       '-NonInteractive',
       '-Command', WINDOWS_ACL_VERIFY_SCRIPT,
     ], {
       env: {
-        ...environment,
+        ...verifierEnvironment,
+        PSModulePath: path.win32.join(path.win32.dirname(nativePowerShell), 'Modules'),
         GEV_ACL_FILE: filepath,
         GEV_ACL_USER_SID: sid,
       },

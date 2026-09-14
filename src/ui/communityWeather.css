@@ -1,0 +1,129 @@
+.community-weather {
+  color: #e2e8e9;
+  font:
+    12px/1.5 system-ui,
+    sans-serif;
+}
+.community-weather h3 {
+  margin: 14px 0 8px;
+  font-size: 16px;
+}
+.community-weather h4 {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.community-weather p {
+  margin: 6px 0;
+}
+.community-weather button,
+.community-weather input {
+  font: inherit;
+  border: 1px solid #405459;
+  border-radius: 5px;
+  padding: 6px 9px;
+  color: #e2e8e9;
+  background: #152126;
+}
+.community-weather button {
+  cursor: pointer;
+}
+.community-weather button:hover {
+  background: #213c43;
+}
+.community-weather button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.community-weather button:focus-visible,
+.community-weather input:focus-visible,
+.community-weather summary:focus-visible {
+  outline: 2px solid #70dece;
+  outline-offset: 2px;
+}
+.community-weather button[aria-pressed='true'] {
+  border-color: #70dece;
+  color: #91f6e7;
+}
+.community-weather-actions,
+.community-weather-search {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+}
+.community-weather-actions button:first-child,
+.community-weather-search input {
+  flex: 1;
+  min-width: 0;
+}
+.community-weather-results {
+  display: grid;
+  gap: 5px;
+}
+.community-weather-results button {
+  text-align: left;
+}
+.community-weather-muted,
+.community-weather-status {
+  color: #b1c2c7;
+  font-size: 11px;
+}
+.community-weather-status[data-error='true'] {
+  color: #ffbf96;
+}
+.community-weather-current {
+  border: 1px solid #34474b;
+  border-radius: 7px;
+  padding: 12px;
+  background: #142127;
+}
+.community-weather-temperature {
+  font-size: 36px;
+  line-height: 1.2;
+  color: #98f5e5;
+}
+.community-weather-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(64px, 1fr));
+  overflow-x: auto;
+  gap: 5px;
+  padding-bottom: 5px;
+}
+.community-weather-days article {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+  padding: 7px 4px;
+  background: #142127;
+  border-radius: 5px;
+}
+.community-weather-days small,
+.community-weather-days span {
+  font-size: 10px;
+  color: #b8c9ce;
+}
+.community-weather-alerts details,
+.community-weather-reports {
+  border-top: 1px solid #34474b;
+  margin-top: 7px;
+  padding-top: 7px;
+}
+.community-weather summary {
+  cursor: pointer;
+  color: #f8cc93;
+}
+.community-weather-alert-text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.community-weather-reports button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+  text-align: left;
+}
+.community-weather a {
+  color: #8ce5d8;
+}

@@ -49,6 +49,18 @@ export const DATA_CREDITS = [
       '<a href="https://aisstream.io" target="_blank" rel="noopener">AISStream.io</a>',
   },
   {
+    key: 'openwaters',
+    html: 'Regional vessel positions: <a href="https://openwaters.io" target="_blank" rel="noopener">OpenWaters</a> and its contributing AIS receivers (coverage is incomplete)',
+  },
+  {
+    key: 'noaa-hazards',
+    html: 'Weather alerts: <a href="https://www.weather.gov" target="_blank" rel="noopener">NOAA National Weather Service</a>; preliminary dated storm reports: <a href="https://www.spc.noaa.gov/climo/reports/" target="_blank" rel="noopener">NOAA Storm Prediction Center</a>',
+  },
+  {
+    key: 'community-transit',
+    html: 'Public transit: <a href="https://www.mbta.com/developers/gtfs-realtime" target="_blank" rel="noopener">MBTA / MassDOT</a> · <a href="https://data.texas.gov/Transportation/CapMetro-Vehicle-Positions-PB-File/eiei-9rpf" target="_blank" rel="noopener">CapMetro</a> · <a href="https://svc.metrotransit.org/" target="_blank" rel="noopener">Metro Transit</a> · <a href="https://www.hsl.fi/en/hsl/open-data" target="_blank" rel="noopener">HSL (CC BY 4.0)</a> · <a href="https://github.com/OVapi/ovapi" target="_blank" rel="noopener">OVapi</a> · <a href="https://developer.entur.org/" target="_blank" rel="noopener">Entur</a> · <a href="https://www.data.qld.gov.au/dataset/general-transit-feed-specification-gtfs-translink" target="_blank" rel="noopener">Translink, Queensland Government</a>',
+  },
+  {
     key: 'celestrak',
     html:
       'Satellites (TLEs): CelesTrak ' +
@@ -98,7 +110,7 @@ export const DATA_CREDITS = [
   {
     key: 'open-meteo',
     html:
-      'Cockpit current conditions: ' +
+      'Current conditions and 7-day forecasts: ' +
       '<a href="https://open-meteo.com/en/licence" target="_blank" rel="noopener">Weather data by Open-Meteo.com</a> ' +
       '(CC BY 4.0)',
   },

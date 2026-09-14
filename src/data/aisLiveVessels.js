@@ -1,5 +1,5 @@
 import { createVesselLayer } from '../layers/vessels/index.js';
-import { createAisStreamSource } from '../sources/live/standalone.js';
+import { createCommunityVesselSource } from '../sources/live/open-waters.js';
 import * as context from './contextStore.js';
 import * as trails from './trailRenderer.js';
 import * as labels from './detectionDraw.js';
@@ -12,8 +12,9 @@ import * as worldFocus from '../worldFocus.js';
 import * as render from '../renderGovernor.js';
 
 const aisLiveVesselsLayer = createVesselLayer({
-  source: createAisStreamSource({
-    apiUrl: import.meta.env?.VITE_AIS_LIVE_API_URL || '/api/ais-live',
+  source: createCommunityVesselSource({
+    mode: import.meta.env?.VITE_VESSEL_SOURCE,
+    aisApiUrl: import.meta.env?.VITE_AIS_LIVE_API_URL || '/api/ais-live',
   }),
   options: {
     maxRows: import.meta.env?.VITE_AIS_LIVE_MAX_ROWS,
